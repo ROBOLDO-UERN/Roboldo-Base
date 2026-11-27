@@ -2380,54 +2380,65 @@
             };
         }
 
-        // Calcula os pontos 3D (Ombro -> Cotovelo -> Mão) de cada braço respeitando:
-        // - Ombro Pitch (pra frente e pra trás / cima e baixo no plano sagital Y-Z)
-        // - Ombro Roll  (abertura vertical cima/baixo e afastamento lateral X-Y)
-        // - Cotovelo    (flexão real do antebraço para frente/cima em relação ao úmero)
+        // Calcula os pontos 3D (Ombro -> Cotovelo -> Mão) de cada braço usando
+        // uma cadeia cinemática hierárquica real de 3 juntas (Shoulder Pitch -> Shoulder Roll -> Elbow Hinge):
         function computeArm3DKinematics(side, pose, shoulderOrigin) {
             const isRight = (side === 'right');
-            const signX = isRight ? -1 : 1; // Braço Direito do robô fica em X < 0 (esquerda da tela frontal)
-            const L1 = 44; // Comprimento do braço superior (úmero)
+            const signX = isRight ? -1 : 1; // Braço Direito fica em X < 0 (esquerda da tela frontal); Esquerdo em X > 0
+            const L1 = 42; // Comprimento do braço superior (úmero)
             const L2 = 38; // Comprimento do antebraço
 
-            // Normaliza os ângulos dos servos (0..180°) para desvios em radianos a partir do neutro (90°)
-            // Na montagem física espelhada do Roboldo:
-            // - Pitch: controla avanço frontal/traseiro e elevação sagital
-            // - Roll: controla elevação/abaixamento lateral do braço
-            // - Elbow: controla dobra do cotovelo
+            // Desvios em graus a partir do centro neutro (90°) levando em conta a montagem simétrica espelhada dos servos:
+            // - pitchDeltaDeg (>0: ombro gira para frente/cima; <0: para trás/baixo)
+            // - rollDeltaDeg  (>0: ombro eleva/abre; <0: ombro abaixa)
+            // - elbowDeltaDeg (>0: cotovelo dobra para cima/dentro como no Aceno, Abraço e Cintura; <0: dobra para baixo)
             const pitchDeltaDeg = isRight ? (pose.pitch - 90) : (90 - pose.pitch);
             const rollDeltaDeg  = isRight ? (pose.roll - 90)  : (90 - pose.roll);
             const elbowDeltaDeg = isRight ? (pose.elbow - 90) : (90 - pose.elbow);
 
-            const pitchRad = (pitchDeltaDeg * Math.PI) / 180; // Positivo = ombro gira pra frente/cima
-            const rollRad  = (rollDeltaDeg  * Math.PI) / 180; // Positivo = braço sobe / fecha; Negativo = braço abaixa
-            const elbowRad = (elbowDeltaDeg * Math.PI) / 180; // Flexão do cotovelo
+            const pitchRad = (pitchDeltaDeg * Math.PI) / 180;
+            const rollRad  = (rollDeltaDeg  * Math.PI) / 180;
+            const elbowRad = (elbowDeltaDeg * Math.PI) / 180;
 
-            // Base local do ombro antes do Pitch/Roll: apontando para fora lateralmente (signX, 0, 0)
-            // 1) Aplicamos Roll (elevação cima/baixo no plano frontal X-Y e avanço no abraço):
-            // Quando Roll = 90° (0 rad), o braço está aberto horizontalmente.
-            // Quando Roll aumenta (>90°), o braço sobe/fecha para frente; quando diminui (<90°), abaixa.
-            let dirUpper = {
-                x: signX * Math.cos(rollRad * 0.85),
-                y: -Math.sin(rollRad * 0.75),
-                z: Math.sin(rollRad * 0.55)
-            };
-            // Normaliza dirUpper
-            const lenU = Math.hypot(dirUpper.x, dirUpper.y, dirUpper.z) || 1;
-            dirUpper = { x: dirUpper.x / lenU, y: dirUpper.y / lenU, z: dirUpper.z / lenU };
+            // Referencial ortonormal inicial do braço em pose neutra (90°, 90°, 90°):
+            // - uAxis: direção longitudinal do braço (apontando para fora lateralmente: signX)
+            // - vAxis: direção "para cima" local do braço (eixo para onde o cotovelo dobra ao aumentar o ângulo)
+            // - wAxis: eixo da dobradiça (hinge) do cotovelo (apontando para frente +Z)
+            let uAxis = { x: signX, y: 0,  z: 0 };
+            let vAxis = { x: 0,     y: -1, z: 0 };
+            let wAxis = { x: 0,     y: 0,  z: 1 };
 
-            // 2) Aplicamos o Pitch do Ombro (rotação em torno do eixo lateral X: gira o braço para FRENTE +Z / TRÁS -Z e CIMA -Y / BAIXO +Y)
-            const axisX = { x: 1, y: 0, z: 0 };
-            dirUpper = rotateAroundAxis3D(dirUpper, axisX, pitchRad);
+            // 1º Grau de Liberdade (Ombro Roll — Cima / Baixo no plano frontal):
+            // Gira o conjunto do braço em torno do eixo frontal Z (signX * rollRad * 0.72)
+            // Quando Roll > 90°, o braço sobe (Y negativo); quando Roll < 90°, o braço desce (Y positivo).
+            const rollAngle = -signX * rollRad * 0.72;
+            uAxis = rotateAroundAxis3D(uAxis, wAxis, rollAngle);
+            vAxis = rotateAroundAxis3D(vAxis, wAxis, rollAngle);
 
-            // Vetor perpendicular para articulação do cotovelo (dobrando para frente/cima do robô)
-            let bendAxis = rotateAroundAxis3D({ x: 0, y: 1, z: 0 }, axisX, pitchRad);
-            const dirForearm = rotateAroundAxis3D(dirUpper, bendAxis, -signX * elbowRad * 0.9);
-            // Também aplica componente sagital direta do cotovelo (para frente/cima)
-            const dirForearmFinal = rotateAroundAxis3D(dirForearm, axisX, elbowRad * 0.55);
+            // Também adiciona leve fechamento frontal quando Roll é muito alto (ex: Abraço Roll=170°)
+            const hugCloseAngle = -signX * Math.max(0, rollRad) * 0.38;
+            const worldY = { x: 0, y: 1, z: 0 };
+            uAxis = rotateAroundAxis3D(uAxis, worldY, hugCloseAngle);
+            vAxis = rotateAroundAxis3D(vAxis, worldY, hugCloseAngle);
+            wAxis = rotateAroundAxis3D(wAxis, worldY, hugCloseAngle);
 
-            const elbowPos = vec3Add(shoulderOrigin, vec3Scale(dirUpper, L1));
-            const handPos  = vec3Add(elbowPos, vec3Scale(dirForearmFinal, L2));
+            // 2º Grau de Liberdade (Ombro Pitch — Frente / Trás e elevação sagital em torno do eixo lateral X):
+            // Quando Pitch > 90°, o braço gira para frente (+Z) e para cima (-Y).
+            // Quando Pitch < 90°, o braço gira para trás (-Z) ou para baixo (+Y).
+            const worldX = { x: 1, y: 0, z: 0 };
+            const pitchAngle = pitchRad * 0.82;
+            uAxis = rotateAroundAxis3D(uAxis, worldX, pitchAngle);
+            vAxis = rotateAroundAxis3D(vAxis, worldX, pitchAngle);
+            wAxis = rotateAroundAxis3D(wAxis, worldX, pitchAngle);
+
+            // 3º Grau de Liberdade (Cotovelo — Dobradiça pura de 1 eixo no plano do braço!):
+            // O antebraço parte da direção do úmero (uAxis) e gira APENAS em torno do eixo da dobradiça do cotovelo (wAxis)
+            // em direção a vAxis (para cima/dentro quando elbowDeltaDeg > 0, ou para baixo quando < 0).
+            const elbowHingeAngle = -signX * elbowRad * 0.95;
+            const dirForearm = rotateAroundAxis3D(uAxis, wAxis, elbowHingeAngle);
+
+            const elbowPos = vec3Add(shoulderOrigin, vec3Scale(uAxis, L1));
+            const handPos  = vec3Add(elbowPos, vec3Scale(dirForearm, L2));
 
             return {
                 shoulder: shoulderOrigin,
