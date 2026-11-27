@@ -3,13 +3,13 @@
   "id": "roboldo-config",
   "name": "Ambiente de Configuração do Roboldo",
   "shortName": "RoboControl Studio",
-  "version": "3.0.0",
-  "description": "Painel pré-instalado de configuração, calibração Dual-ESP (Cabeça + Braços), síntese de voz offline (Piper TTS) e sequenciador de coreografias do Roboldo.",
+  "version": "4.0.0",
+  "description": "Painel pré-instalado (v4.0 Glass Edition) de configuração, calibração Dual-ESP (Cabeça + Braços), síntese de voz offline (Piper TTS) e sequenciador de coreografias do Roboldo.",
   "category": "system",
   "author": "LAR / UERN",
   "repository": {
-    "url": "https://github.com/Misians/Roboldo-Game-Perguntas-e-Respostas",
-    "branch": "ambiente-configuracao"
+    "url": "https://github.com/ROBOLDO-UERN/RoboControl-Studio",
+    "branch": "main"
   },
   "store": {
     "listed": true,

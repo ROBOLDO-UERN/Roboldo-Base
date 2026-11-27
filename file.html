@@ -3,18 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel de Voz - Roboldo 2.0 (Piper Offline)</title>
+  <title>Painel de Voz • Roboldo 2.0 (v4.0 Glass Edition)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #2563eb;
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #f8fafc;
+      --mint-cream: #F2FFF6;
+      --tea-green: #CAFFDE;
+      --sky-aqua: #25C5E9;
+      --dark-cyan: #238689;
+      --ink-black: #021225;
+    }
+    * {
+      box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background-color: #FAFDFB;
+      background-image:
+        radial-gradient(circle at 10% 14%, rgba(202, 255, 222, 0.32) 0%, transparent 45%),
+        radial-gradient(circle at 90% 12%, rgba(37, 197, 233, 0.10) 0%, transparent 42%),
+        linear-gradient(180deg, #FFFFFF 0%, #F7FCF9 55%, #F2FFF6 100%);
+      color: var(--ink-black);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -22,95 +31,175 @@
       margin: 0;
       padding: 20px;
     }
-    .container {
-      background-color: var(--card);
-      padding: 28px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      max-width: 550px;
+    .glass-container {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.84) 0%, rgba(242, 255, 246, 0.62) 100%);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      padding: 32px;
+      border-radius: 28px;
+      border: 1px solid rgba(35, 134, 137, 0.16);
+      box-shadow:
+        0 18px 40px -10px rgba(2, 18, 37, 0.06),
+        0 4px 12px -2px rgba(35, 134, 137, 0.04),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+      max-width: 560px;
       width: 100%;
     }
-    h1 {
-      margin-top: 0;
-      font-size: 1.5rem;
+    .header-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      color: #60a5fa;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #F2FFF6 0%, #CAFFDE 100%);
+      color: var(--dark-cyan);
+      border: 1px solid rgba(35, 134, 137, 0.22);
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--ink-black);
+      letter-spacing: -0.02em;
+    }
+    h1 span {
+      color: var(--dark-cyan);
     }
     textarea {
       width: 100%;
       height: 130px;
-      background: #0f172a;
-      color: #fff;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 1rem;
-      line-height: 1.4;
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--ink-black);
+      border: 1px solid rgba(35, 134, 137, 0.2);
+      border-radius: 16px;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      line-height: 1.5;
       resize: vertical;
-      box-sizing: border-box;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
+      transition: all 0.18s ease;
+    }
+    textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--sky-aqua);
+      box-shadow: 0 0 0 3px rgba(37, 197, 233, 0.16);
+      background: #FFFFFF;
     }
     .control-group {
       margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(35, 134, 137, 0.12);
+      padding: 12px 14px;
+      border-radius: 16px;
     }
     label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.9rem;
-      margin-bottom: 6px;
-      color: #cbd5e1;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--ink-black);
     }
-    select, input[type="range"] {
+    label span {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--dark-cyan);
+    }
+    select {
       width: 100%;
-      box-sizing: border-box;
-      padding: 8px;
-      border-radius: 6px;
-      background: #0f172a;
-      color: #fff;
-      border: 1px solid #334155;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--ink-black);
+      border: 1px solid rgba(35, 134, 137, 0.2);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #CAFFDE 0%, rgba(37, 197, 233, 0.45) 55%, rgba(35, 134, 137, 0.45) 100%);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #25C5E9 0%, #238689 100%);
+      border: 2.5px solid #FFFFFF;
+      margin-top: -6px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(35, 134, 137, 0.35);
     }
     .btn-group {
       display: flex;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 22px;
     }
     button {
       flex: 1;
       padding: 14px;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 14px;
       cursor: pointer;
-      transition: transform 0.1s, opacity 0.2s;
-    }
-    button:active {
-      transform: scale(0.98);
+      transition: all 0.18s ease;
     }
     .btn-speak {
-      background-color: #2563eb;
+      background: linear-gradient(135deg, #238689 0%, #1d7275 55%, #25C5E9 145%);
       color: white;
+      border: 1px solid rgba(35, 134, 137, 0.3);
+      box-shadow: 0 6px 16px -3px rgba(35, 134, 137, 0.28);
+    }
+    .btn-speak:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px -3px rgba(37, 197, 233, 0.38);
     }
     .btn-stop {
-      background-color: #dc2626;
-      color: white;
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--dark-cyan);
+      border: 1px solid rgba(35, 134, 137, 0.22);
       flex: 0.4;
+    }
+    .btn-stop:hover {
+      background: var(--mint-cream);
+      color: var(--ink-black);
     }
     .status {
       margin-top: 16px;
       text-align: center;
-      font-size: 0.9rem;
-      color: #38bdf8;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--dark-cyan);
       min-height: 20px;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>🤖 Roboldo 2.0 (Offline)</h1>
+<div class="glass-container">
+  <div class="header-row">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img src="assets/logo-roboldo.png" alt="Logo Roboldo" style="width:42px;height:42px;border-radius:12px;object-fit:contain;background:#fff;border:1px solid rgba(35,134,137,0.2);padding:2px;">
+      <h1>Roboldo <span>Voz Offline</span></h1>
+    </div>
+    <span class="badge">Piper TTS</span>
+  </div>
   
   <textarea id="texto">Olá, eu sou o Roboldo! Robô social da UERN! É um prazer estar com você aqui no COIN! Eu sou a versão 2.0. Meu irmão 1.0 e 1.2 também estão aqui presentes. Por ser o irmão mais novo, eu tenho braços, um rostinho dinâmico e posso ter acesso à câmera! Também tenho suporte pra tablet, onde podem ser alocados programas com jogos e pranchas assistivas. Quer saber mais sobre mim? Pergunta pra minha programadora, Artemísia! Bom evento!</textarea>
 
@@ -203,9 +292,8 @@
       urlAudioAtual = URL.createObjectURL(await resposta.blob());
       audioAtual = new Audio(urlAudioAtual);
       
-      // Configurações aplicadas direto no player de áudio do navegador
       audioAtual.volume = Number(volInput.value);
-      audioAtual.preservesPitch = false; // Permite alterar o tom junto com a velocidade se desejar voz mais robótica/fina
+      audioAtual.preservesPitch = false;
       audioAtual.playbackRate = Number(pitchInput.value);
 
       audioAtual.onended = () => {
